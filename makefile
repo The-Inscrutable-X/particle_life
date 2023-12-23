@@ -1,12 +1,9 @@
 CC=gcc
-CFLAGS=-c -Wall -g
+CFLAGS=-Wall -g
 
 all: project
 
-project: ParticleLife.o
-	$(CC) ParticleLife.o -o ParticleLife -I include -L lib -l SDL2-2.0.0
-
-ParticleLife.o: ParticleLife.c
+project: ParticleLife.c
 	$(CC) $(CFLAGS) ParticleLife.c -I include -L lib -l SDL2-2.0.0
 
 clean:
