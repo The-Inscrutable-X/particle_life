@@ -3,8 +3,13 @@
 int numTypes = 6;
 int numParticles = 1000;
 
-void main(){
-    int colorStep = 360/numTypes;
+void initialize_window(void) {
+    SDL_Init(SDL_INIT_EVERYTHING);
+}
+
+int main(){
+    // int colorStep = 360/numTypes;
+    printf("Simulation starting...\n");
     srand(7);
     particle* population = malloc(sizeof(particle) * numParticles);
     //initialize all particles
@@ -14,8 +19,10 @@ void main(){
         population[i].velocity_x = 0;
         population[i].velocity_y = 0;
         population[i].type = rand() % numTypes;
+        // printf("X:%d, Y:%d\n", population[i].position_x,population[i].position_y);
     }
-
+    initialize_window();
+    return EXIT_SUCCESS;
 }
 
 void make_particle(particle* cur_particle){

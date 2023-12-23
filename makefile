@@ -3,17 +3,14 @@ CFLAGS=-c -Wall -g
 
 all: project
 
-project: shell.o project.o
-	$(CC) shell.o project.o -o project
+project: ParticleLife.o
+	$(CC) ParticleLife.o -o ParticleLife -I include -L lib -l SDL2-2.0.0
 
-shell.o: shell.c
-	$(CC) $(CFLAGS) shell.c
-
-project.o: project.c
-	$(CC) $(CFLAGS) project.c
+ParticleLife.o: ParticleLife.c
+	$(CC) $(CFLAGS) ParticleLife.c -I include -L lib -l SDL2-2.0.0
 
 clean:
-	/bin/rm -f project *.o *.gz
+	/bin/rm -f ParticleLife *.o *.gz
 
-run:
-	./project
+run: 
+	./ParticleLife
