@@ -4,7 +4,7 @@ CFLAGS=-Wall -g
 all: project
 
 project: ParticleLife.c
-	$(CC) $(CFLAGS) ParticleLife.c -I include -L lib -l SDL2-2.0.0
+	$(CC) $(CFLAGS) ParticleLife.c -I include -L lib -l SDL2-2.0.0 -o ParticleLife
 
 clean:
 	/bin/rm -f ParticleLife *.o *.gz
