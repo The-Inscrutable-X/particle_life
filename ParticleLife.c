@@ -52,13 +52,10 @@ void process_input() {
             if (event.key.keysym.sym == SDLK_ESCAPE) {
                 game_running = FALSE;
             }
-            if (event.key.keysym.sym == SDLK_LSHIFT) {
-                randomize = TRUE;
-            } 
             break;
         case SDL_KEYUP:
             if (event.key.keysym.sym == SDLK_LSHIFT) {
-                randomize = FALSE;
+                randomize = TRUE;
             }
             break;
     }
@@ -83,9 +80,10 @@ void setup() {
     radiuses_table = malloc(numTypes * numTypes * sizeof(float));
     force_table = malloc(numTypes * numTypes * sizeof(float));
     for (int i = 0; i < numTypes*numTypes; ++i){
-        min_distances_table[i] = 1;
-        radiuses_table[i] = 3;
-        force_table[i] = 1;
+        min_distances_table[i] = .5;
+        radiuses_table[i] = rand() % 5 + min_distances_table[i];
+        // force_table[i] = rand() % 2 + .1;
+        force_table[i] = rand() % 3 - 1.5;
     }
 
 }
@@ -96,25 +94,37 @@ void update() {
     // float debug3 = 0;
     for (int i = 0; i < numParticles; ++i) {
         for (int j = 0; j < numParticles; ++j) {
-            //  int distance = 
-            //  ((population[j].position_x - population[i].position_x)(population[j].position_x - population[i].position_x) + (population[j].position_y - population[i].position_y)(population[j].position_y - population[i].position_y))
+            //Calculates the forces on j caused by i and accelerates j
             if (i != j){
+                //Calculates the distance, direction, between i and j as well as the constants defining the forces
                 float x_dist = population[j].position_x - population[i].position_x;
                 float y_dist = population[j].position_y - population[i].position_y;
                 float dist = sqrt(x_dist*x_dist + y_dist*y_dist);
-                for (int row = 0; row < numTypes; ++row){
-                    for (int col = 0; col < numTypes; ++col){
-                        float min_distance = min_distances_table[row*numTypes+col]; //FROM TABLE
-                        float radius = radiuses_table[row*numTypes+col]; //FROM TABLE
-                        float force = force_table[row*numTypes+col]; //FROM TABLE
-                        // debug = force;
-                        // debug2 = radius;
-                        // debug3 = min_distance;
-                    }
-                }
+                float min_distance = min_distances_table[population[i].type*numTypes+population[j].type]; //FROM TABLE
+                float radius = radiuses_table[population[i].type*numTypes+population[j].type]; //FROM TABLE
+                float force = force_table[population[i].type*numTypes+population[j].type]; //FROM TABLE
+                      
+                //Calculates the force applied on j by i
+                float primary_force = (-force/radius) * dist + force;
+                float repulsive_force = (-force/min_distance) * dist + force;
+                if (dist > radius){primary_force = 0;}
+                if (dist > min_distance){repulsive_force = 0;}
+                float net_force = primary_force + repulsive_force;
+                
+                //accelerates j in the proper direction according to force
+                population[j].velocity_y += net_force * (y_dist/dist);
+                population[j].velocity_x += net_force * (x_dist/dist);
                 
             }
         }
+    }
+    for (int i = 0; i < numParticles; ++i) {
+        //moves each particle according to its velocity
+        population[i].position_x += population[i].velocity_x;
+        population[i].position_y += population[i].velocity_y;
+
+        population[i].position_x = fmod(population[i].position_x, WIDTH);
+        population[i].position_y = fmod(population[i].position_y, HEIGHT);
     }
     // printf("%f, %f, %f\n", debug, debug2, debug3);
     // printf("--%d-\n", rand());
@@ -167,6 +177,7 @@ int main(){
         render();
         if (randomize){
             setup();
+            randomize = FALSE;
         }
     }
     return EXIT_SUCCESS;
