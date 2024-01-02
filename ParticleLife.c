@@ -10,9 +10,12 @@ particle* population = NULL;
 float* min_distances_table = NULL;
 float* radiuses_table = NULL;
 float* force_table = NULL;
-float N_repulsion_multiplier = 3;
-int numParticles = 1000;
+float N_repulsion_multiplier = 5;
+float Base_force_multiplier = .05;
+float Base_friction = .85;
+int numParticles = 700;
 int numTypes = 3;
+int frame;
 
 
 int initialize_window(void) {
@@ -62,6 +65,10 @@ void process_input() {
 }
 
 void setup() {
+    free(population);
+    free(min_distances_table);
+    free(radiuses_table);
+    free(force_table);
     // int colorStep = 360/numTypes;
     printf("Placing particles...\n");
     // srand(7);
@@ -80,10 +87,11 @@ void setup() {
     radiuses_table = malloc(numTypes * numTypes * sizeof(float));
     force_table = malloc(numTypes * numTypes * sizeof(float));
     for (int i = 0; i < numTypes*numTypes; ++i){
-        min_distances_table[i] = .5;
-        radiuses_table[i] = rand() % 5 + min_distances_table[i];
-        // force_table[i] = rand() % 2 + .1;
-        force_table[i] = rand() % 3 - 1.5;
+        min_distances_table[i] = 15;
+        // radiuses_table[i] = rand() % 15 + min_distances_table[i] + 5;
+        radiuses_table[i] = 60;
+        // force_table[i] = (rand() % 3 - 1.1);
+        force_table[i] = 1;
     }
 
 }
@@ -92,6 +100,7 @@ void update() {
     // float debug = 0;
     // float debug2 = 0;
     // float debug3 = 0;
+    int first = 0;
     for (int i = 0; i < numParticles; ++i) {
         for (int j = 0; j < numParticles; ++j) {
             //Calculates the forces on j caused by i and accelerates j
@@ -106,25 +115,35 @@ void update() {
                       
                 //Calculates the force applied on j by i
                 float primary_force = (-force/radius) * dist + force;
-                float repulsive_force = (-force/min_distance) * dist + force;
+                float repulsive_force = ((fabs(force) * N_repulsion_multiplier)/min_distance) * dist - (fabs(force) * N_repulsion_multiplier);
                 if (dist > radius){primary_force = 0;}
                 if (dist > min_distance){repulsive_force = 0;}
-                float net_force = primary_force + repulsive_force;
+                float net_force = (primary_force + repulsive_force) * Base_force_multiplier;
+                if (first == 0 && frame % 5 == 0){printf("repl force %f\n", repulsive_force); first = -1;}
                 
-                //accelerates j in the proper direction according to force
+                //accelerates j in the proper direction according to force, where positve would be an attractive mechanism
+                if (dist != 0){
                 population[j].velocity_y += net_force * (y_dist/dist);
                 population[j].velocity_x += net_force * (x_dist/dist);
-                
+                } else {
+                    printf("BREAKING EVENT\n");
+                }
+
             }
         }
     }
     for (int i = 0; i < numParticles; ++i) {
+        //apply friction
+        population[i].velocity_x = population[i].velocity_x * Base_friction;
+        population[i].velocity_y = population[i].velocity_y * Base_friction;
+
         //moves each particle according to its velocity
         population[i].position_x += population[i].velocity_x;
         population[i].position_y += population[i].velocity_y;
-
-        population[i].position_x = fmod(population[i].position_x, WIDTH);
-        population[i].position_y = fmod(population[i].position_y, HEIGHT);
+        
+        //TODO: Make this work for negatives
+        population[i].position_x = fmod(population[i].position_x + WIDTH, WIDTH);
+        population[i].position_y = fmod(population[i].position_y + HEIGHT, HEIGHT);
     }
     // printf("%f, %f, %f\n", debug, debug2, debug3);
     // printf("--%d-\n", rand());
@@ -171,7 +190,11 @@ int main(){
     srand(7); //move to setup to ensure each placement results in the same particle positions.
     setup();
     //game loop
+    frame = 0;
     while (game_running) {
+        if (frame %5 == 0) {
+            printf("Interactions running tracking first particle, x=%f, y=%f, vx=%f\n", population[0].position_x, population[0].position_y, population[0].velocity_x);
+        }
         process_input();
         update();
         render();
@@ -179,6 +202,7 @@ int main(){
             setup();
             randomize = FALSE;
         }
+        ++frame;
     }
     return EXIT_SUCCESS;
 }
