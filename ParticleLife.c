@@ -13,10 +13,9 @@ float* force_table = NULL;
 float N_repulsion_multiplier = 5;
 float Base_force_multiplier = .05;
 float Base_friction = .85;
-int numParticles = 700;
+int numParticles = 1000;
 int numTypes = 3;
 int frame;
-
 
 int initialize_window(void) {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
@@ -64,6 +63,30 @@ void process_input() {
     }
 }
 
+int random_z(int lower, int upper){
+    return (rand() % (upper - lower + 1)) + lower;
+}
+
+float random_float_z(float left, float right) {
+    float randomNumber = sin(rand() * rand());
+    return left + (right - left) * fabs(randomNumber);
+}
+
+void print_run_data() {
+    FILE *fptr;
+
+    // Open a file in writing mode
+    fptr = fopen("initial_conditions.txt", "w");
+    for (int i = 0; i < numTypes * numTypes; i++){
+        fprintf(fptr, "min distances %f, radiuses %f, forces %f\n", min_distances_table[i], radiuses_table[i], force_table[i]);
+    }
+    for (int i = 0; i < numParticles; ++i){
+        fprintf(fptr, "Particle %d, at %f, %f\n", i, population[i].position_x, population[i].position_y);
+    }
+    // Close the file
+    fclose(fptr);
+}
+
 void setup() {
     free(population);
     free(min_distances_table);
@@ -87,13 +110,16 @@ void setup() {
     radiuses_table = malloc(numTypes * numTypes * sizeof(float));
     force_table = malloc(numTypes * numTypes * sizeof(float));
     for (int i = 0; i < numTypes*numTypes; ++i){
-        min_distances_table[i] = 15;
+        min_distances_table[i] = random_z(30,50);
         // radiuses_table[i] = rand() % 15 + min_distances_table[i] + 5;
-        radiuses_table[i] = 60;
+        radiuses_table[i] = random_z(70,250);
         // force_table[i] = (rand() % 3 - 1.1);
-        force_table[i] = 1;
+        force_table[i] = random_float_z(0.3, 1.0);
+        if (rand() < RAND_MAX / 2){
+            force_table[i] = force_table[i] * -1;
+        }
     }
-
+    print_run_data();
 }
 
 void update() {
@@ -107,7 +133,11 @@ void update() {
             if (i != j){
                 //Calculates the distance, direction, between i and j as well as the constants defining the forces
                 float x_dist = population[j].position_x - population[i].position_x;
+                if (x_dist > 0.5 * WIDTH){x_dist -= WIDTH;}
+                if (x_dist < -0.5 * WIDTH){x_dist += WIDTH;}
                 float y_dist = population[j].position_y - population[i].position_y;
+                if (y_dist > 0.5 * HEIGHT){y_dist -= HEIGHT;}
+                if (y_dist < -0.5 * HEIGHT){y_dist += HEIGHT;}
                 float dist = sqrt(x_dist*x_dist + y_dist*y_dist);
                 float min_distance = min_distances_table[population[i].type*numTypes+population[j].type]; //FROM TABLE
                 float radius = radiuses_table[population[i].type*numTypes+population[j].type]; //FROM TABLE
@@ -116,16 +146,17 @@ void update() {
                 //Calculates the force applied on j by i
                 float primary_force = (-force/radius) * dist + force;
                 float repulsive_force = ((fabs(force) * N_repulsion_multiplier)/min_distance) * dist - (fabs(force) * N_repulsion_multiplier);
-                if (dist > radius){primary_force = 0;}
+                if (first == 0 && frame % 5 == 0){printf("NOCLAMP repl force %f prim force %f dist %f\n", repulsive_force, primary_force, dist); first = -1;}
+                if (dist > radius || dist < min_distance){primary_force = 0;}
                 if (dist > min_distance){repulsive_force = 0;}
                 float net_force = (primary_force + repulsive_force) * Base_force_multiplier;
-                if (first == 0 && frame % 5 == 0){printf("repl force %f\n", repulsive_force); first = -1;}
-                
                 //accelerates j in the proper direction according to force, where positve would be an attractive mechanism
                 if (dist != 0){
                 population[j].velocity_y += net_force * (y_dist/dist);
                 population[j].velocity_x += net_force * (x_dist/dist);
                 } else {
+                    population[j].velocity_y += net_force;
+                    population[j].velocity_x += net_force;
                     printf("BREAKING EVENT\n");
                 }
 
@@ -141,7 +172,7 @@ void update() {
         population[i].position_x += population[i].velocity_x;
         population[i].position_y += population[i].velocity_y;
         
-        //TODO: Make this work for negatives
+        //Apply wrapping for particle positions in all four bounds of the screen
         population[i].position_x = fmod(population[i].position_x + WIDTH, WIDTH);
         population[i].position_y = fmod(population[i].position_y + HEIGHT, HEIGHT);
     }
