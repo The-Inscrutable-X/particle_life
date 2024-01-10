@@ -1,3 +1,5 @@
+numTypes 3
+population 1000
 min distances 48.000000, radiuses 238.000000, forces -0.703496
 min distances 42.000000, radiuses 164.000000, forces 0.989445
 min distances 42.000000, radiuses 227.000000, forces -0.773433

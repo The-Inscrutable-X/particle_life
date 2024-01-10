@@ -17,6 +17,8 @@ int numParticles = 1000;
 int numTypes = 3;
 int frame;
 
+//Fast initial speed; gravity, collision repulsion.
+
 int initialize_window(void) {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         fprintf(stdout, "Error initializing SDL.\n");
@@ -40,6 +42,36 @@ int initialize_window(void) {
         return FALSE;
     }
     return TRUE;
+}
+
+void load_config() {
+    free(population);
+    free(min_distances_table);
+    free(radiuses_table);
+    free(force_table);
+    printf("Placing saved particles and world...\n");
+    
+    FILE *configs = fopen("./interesting_worlds/world_to_load", "r");
+    fscanf(configs, "%*s, %d", &numTypes);
+    fscanf(configs, "%*s, %d", &numParticles);
+    printf("numTypes loaded %d", numTypes);
+    printf("numParticles loaded %d", numParticles);
+    population = malloc(sizeof(particle) * numParticles);
+    //initialize all particles
+    for (int i = 0; i < numParticles; ++i){
+        population[i].position_x = rand() % 800;
+        population[i].position_y = rand() % 1000;
+        population[i].velocity_x = 0;
+        population[i].velocity_y = 0;
+        population[i].radius = 1;
+        population[i].type = rand() % numTypes;
+        // printf("X:%f, Y:%f\n", population[i].position_x,population[i].position_y);
+    }
+    min_distances_table = malloc(numTypes * numTypes * sizeof(float));
+    radiuses_table = malloc(numTypes * numTypes * sizeof(float));
+    force_table = malloc(numTypes * numTypes * sizeof(float));
+    for (int i = 0; i < numTypes*numTypes; ++i){
+    }
 }
 
 void process_input() {
@@ -77,6 +109,8 @@ void print_run_data() {
 
     // Open a file in writing mode
     fptr = fopen("initial_conditions.txt", "w");
+    fprintf(fptr, "numTypes %d\n", numTypes);
+    fprintf(fptr, "population %d\n", numParticles);
     for (int i = 0; i < numTypes * numTypes; i++){
         fprintf(fptr, "min distances %f, radiuses %f, forces %f\n", min_distances_table[i], radiuses_table[i], force_table[i]);
     }
@@ -199,6 +233,12 @@ void render() {
                 break;
             case 2:
                 SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+                break;
+            case 3:
+                SDL_SetRenderDrawColor(renderer, 255, 255, 50, 255);
+                break;
+            case 4:
+                SDL_SetRenderDrawColor(renderer, 50, 255, 255, 255);
                 break;
         }
         SDL_RenderFillRect(renderer, &cur_rect);
