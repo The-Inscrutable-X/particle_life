@@ -13,8 +13,8 @@ float* force_table = NULL;
 float N_repulsion_multiplier = 5;
 float Base_force_multiplier = .05;
 float Base_friction = .85;
-int numParticles = 1000;
-int numTypes = 3;
+int numParticles = 1200;
+int numTypes = 5;
 int frame;
 
 //Fast initial speed; gravity, collision repulsion.
@@ -52,13 +52,19 @@ void load_config() {
     printf("Placing saved particles and world...\n");
     
     FILE *configs = fopen("./interesting_worlds/world_to_load", "r");
-    fscanf(configs, "%*s, %d", &numTypes);
-    fscanf(configs, "%*s, %d", &numParticles);
-    printf("numTypes loaded %d", numTypes);
-    printf("numParticles loaded %d", numParticles);
+    int numTypes_z;
+    int numParticles_z;
+    fscanf(configs, "%*s, %d", &numTypes_z);
+    fscanf(configs, "%*s, %d", &numParticles_z);
+    printf("numTypes loaded %d", numTypes_z);
+    printf("numParticles loaded %d", numParticles_z);
+    numParticles = numParticles_z;
+    numTypes = numTypes_z;
     population = malloc(sizeof(particle) * numParticles);
     //initialize all particles
     for (int i = 0; i < numParticles; ++i){
+        int pos_x_z;
+        int pos_y_z;
         population[i].position_x = rand() % 800;
         population[i].position_y = rand() % 1000;
         population[i].velocity_x = 0;
@@ -90,6 +96,9 @@ void process_input() {
         case SDL_KEYUP:
             if (event.key.keysym.sym == SDLK_LSHIFT) {
                 randomize = TRUE;
+            }
+            if (event.key.keysym.sym == SDLK_l) {
+                load_config();
             }
             break;
     }
