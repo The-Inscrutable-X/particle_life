@@ -14,7 +14,7 @@ float N_repulsion_multiplier = 5;
 float Base_force_multiplier = .05;
 float Base_friction = .85;
 int numParticles = 1200;
-int numTypes = 5;
+int numTypes = 3;
 int frame;
 
 //Fast initial speed; gravity, collision repulsion.
@@ -54,8 +54,10 @@ void load_config() {
     FILE *configs = fopen("./interesting_worlds/world_to_load", "r");
     int numTypes_z;
     int numParticles_z;
-    fscanf(configs, "%*s, %d", &numTypes_z);
-    fscanf(configs, "%*s, %d", &numParticles_z);
+    char discard[10000];
+    printf("File loaded\n");
+    fscanf(configs, "%s, %d", discard, &numTypes_z);
+    fscanf(configs, "%s, %d", discard, &numParticles_z);
     printf("numTypes loaded %d", numTypes_z);
     printf("numParticles loaded %d", numParticles_z);
     numParticles = numParticles_z;
@@ -63,8 +65,8 @@ void load_config() {
     population = malloc(sizeof(particle) * numParticles);
     //initialize all particles
     for (int i = 0; i < numParticles; ++i){
-        int pos_x_z;
-        int pos_y_z;
+        // int pos_x_z;
+        // int pos_y_z;
         population[i].position_x = rand() % 800;
         population[i].position_y = rand() % 1000;
         population[i].velocity_x = 0;
@@ -157,7 +159,7 @@ void setup() {
         // radiuses_table[i] = rand() % 15 + min_distances_table[i] + 5;
         radiuses_table[i] = random_z(70,250);
         // force_table[i] = (rand() % 3 - 1.1);
-        force_table[i] = random_float_z(0.3, 1.0);
+        force_table[i] = random_float_z(0.2, 1.0);
         if (rand() < RAND_MAX / 2){
             force_table[i] = force_table[i] * -1;
         }
